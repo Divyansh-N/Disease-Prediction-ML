@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 # Load dataset
 train_df = pd.read_csv("Training.csv")
@@ -13,7 +13,7 @@ X = train_df.drop("prognosis", axis=1)
 y = train_df["prognosis"]
 
 # Train model
-model = DecisionTreeClassifier(random_state=42)
+model = RandomForestClassifier(n_estimators=200, random_state=42)
 model.fit(X, y)
 
 # Prediction function
@@ -46,14 +46,43 @@ st.title("🩺 Smart Disease Prediction System")
 
 st.write("Enter symptoms separated by commas:")
 
-user_input = st.text_input(
-    "Example: itching, skin rash, nodal skin eruptions"
+st.write("Select symptoms from the list below:")
+
+# get symptoms from dataset
+symptoms_list = list(X.columns)
+
+# multi select box
+selected_symptoms = st.multiselect(
+    "Choose symptoms:",
+    symptoms_list
 )
 
 if st.button("Predict Disease"):
-    if user_input.strip() == "":
-        st.warning("Please enter symptoms.")
+
+    if len(selected_symptoms) < 3:
+        st.warning("Please select at least 3 symptoms")
+
     else:
-        result = predict_disease(user_input)
-        st.success(f"Predicted Disease: {result}")
+        # create input dictionary
+        input_dict = {symptom: 0 for symptom in X.columns}
+
+        for symptom in selected_symptoms:
+            input_dict[symptom] = 1
+
+        # convert to dataframe
+        input_df = pd.DataFrame([input_dict])
+
+        # get prediction probabilities
+        probs = model.predict_proba(input_df)[0]
+
+        # get top 3 predictions
+        top_indices = probs.argsort()[-3:][::-1]
+
+        st.subheader("Possible Diseases:")
+
+        for i in top_indices:
+            disease = model.classes_[i]
+            probability = probs[i] * 100
+            st.write(f"{disease} — {probability:.2f}%")
+
 
