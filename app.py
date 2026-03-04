@@ -2,21 +2,21 @@ import streamlit as st
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
-# Load dataset
+
 train_df = pd.read_csv("Training.csv")
 
-# Remove unwanted columns
+
 train_df = train_df.loc[:, ~train_df.columns.str.contains("^Unnamed")]
 
-# Split features and target
+
 X = train_df.drop("prognosis", axis=1)
 y = train_df["prognosis"]
 
-# Train model
+
 model = RandomForestClassifier(n_estimators=200, random_state=42)
 model.fit(X, y)
 
-# Prediction function
+
 def predict_disease(symptom_text, min_symptoms=3):
     user_symptoms = [
         s.strip().lower().replace(" ", "_").replace("'", "").replace('"', "")
@@ -48,10 +48,10 @@ st.write("Enter symptoms separated by commas:")
 
 st.write("Select symptoms from the list below:")
 
-# get symptoms from dataset
+
 symptoms_list = list(X.columns)
 
-# multi select box
+
 selected_symptoms = st.multiselect(
     "Choose symptoms:",
     symptoms_list
@@ -63,19 +63,19 @@ if st.button("Predict Disease"):
         st.warning("Please select at least 3 symptoms")
 
     else:
-        # create input dictionary
+        
         input_dict = {symptom: 0 for symptom in X.columns}
 
         for symptom in selected_symptoms:
             input_dict[symptom] = 1
 
-        # convert to dataframe
+        
         input_df = pd.DataFrame([input_dict])
 
-        # get prediction probabilities
+        
         probs = model.predict_proba(input_df)[0]
 
-        # get top 3 predictions
+    
         top_indices = probs.argsort()[-3:][::-1]
 
         st.subheader("Possible Diseases:")
